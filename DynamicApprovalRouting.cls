@@ -19,7 +19,7 @@ public class DynamicApprovalRouting {
     public static List<ApprovalResponse> submitForApproval(List<ApprovalRequest> requests) {
         List<ApprovalResponse> responses = new List<ApprovalResponse>();
         for (ApprovalRequest req : requests) {
-            List<Id> approverIds = getApprovers();
+            List<Id> approverIds = getApprovers(req.market);
 
             ApprovalResponse response = new ApprovalResponse();
             response.isSuccess = submitRecordForApproval(req.recordId, approverIds, response);
@@ -28,8 +28,15 @@ public class DynamicApprovalRouting {
         return responses;
     }
     
-    private static List<Id> getApprovers() {
-        List<Group> queueList = [SELECT Id FROM Group WHERE Type = 'Queue' AND Name = 'queue name' LIMIT 1];
+    private static List<Id> getApprovers(String market) {
+        Map<String, String> territoryToQueue = new Map<String, String>{
+            'ATL' => 'Payer - ATL',
+            'CHI' => 'Payer - CHI',
+            'PHX' => 'Payer - PHX',
+            'Duarte' => 'Payer - Duarte',
+            'National' => 'Payer - National'
+        };
+        List<Group> queueList = [SELECT Id FROM Group WHERE Type = 'Queue' AND Name = :territoryToQueue.get(market) LIMIT 1];
         List<Id> queueIds = new List<Id>();
         for (Group g : queueList) {
             queueIds.add(g.Id);
